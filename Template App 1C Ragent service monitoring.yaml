@@ -1,0 +1,48 @@
+zabbix_export:
+  version: '6.4'
+  template_groups:
+    - uuid: a571c0d144b14fd4a87a9d9b2aa9fcd6
+      name: Templates/Applications
+  templates:
+    - uuid: e034403cb5e242df8121cfe0b5c385ba
+      template: 'Template App 1C Ragent service monitoring'
+      name: 'Template App 1C Ragent service monitoring'
+      description: |
+        Шаблон для мониторинга центального сервера 1С Предприятия
+        
+        Подробнее https://slothfk.github.io/1c_zabbix_template_ce/
+      groups:
+        - name: Templates/Applications
+      discovery_rules:
+        - uuid: f652bba01e954b2bad28874d44f39d8b
+          name: '[1С/Центральный сервер] Сервисы RAGENT'
+          key: '1c.cs.ragent.discovery[{$RAGENT_PORTS}]'
+          delay: 1h
+          item_prototypes:
+            - uuid: 7e937757ba434fe7a14515ac72756d76
+              name: '[1С/Центральный сервер] Статус сервиса RAGENT (порт {#RAGENT_PORT})'
+              type: SIMPLE
+              key: 'net.tcp.service[tcp,,{#RAGENT_PORT}]'
+              delay: 30s
+              valuemap:
+                name: 'Service state'
+              tags:
+                - tag: Application
+                  value: '[1С] Доступность'
+              trigger_prototypes:
+                - uuid: 491494fb3311484985a61ba2de93c95d
+                  expression: 'last(/Template App 1C Ragent service monitoring/net.tcp.service[tcp,,{#RAGENT_PORT}])=0'
+                  name: '[1С/Центральный сервер] Недоступен сервис RAGENT на порту {#RAGENT_PORT}'
+                  priority: HIGH
+      macros:
+        - macro: '{$RAGENT_PORTS}'
+          value: '1540'
+          description: 'Порты сервиса RAGENT (если используется несколько сервисов, то указываются через запятую)'
+      valuemaps:
+        - uuid: 32a7385636504ed98ea58bc453d5ab35
+          name: 'Service state'
+          mappings:
+            - value: '0'
+              newvalue: Down
+            - value: '1'
+              newvalue: Up
